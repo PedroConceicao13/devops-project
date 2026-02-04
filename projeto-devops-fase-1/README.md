@@ -1,191 +1,181 @@
-# 🚀 Laboratório DevOps - Projeto 1: Containerização com Docker e Deploy Manual na AWS
+# 🚀 DevOps Lab - Project 1: Docker Containerization & Manual AWS Deploy
 
-## 📋 Índice
-1. [Visão Geral](#visão-geral)
-2. [Pré-requisitos](#pré-requisitos)
-3. [Arquitetura do Projeto](#arquitetura-do-projeto)
-4. [Fase 1: Preparação do Ambiente Local](#fase-1-preparação-do-ambiente-local)
-5. [Fase 2: Containerização com Docker](#fase-2-containerização-com-docker)
-6. [Fase 3: Teste Local do Container](#fase-3-teste-local-do-container)
-7. [Fase 4: Configuração do Amazon ECR](#fase-4-configuração-do-amazon-ecr)
-8. [Fase 5: Push da Imagem para o ECR](#fase-5-push-da-imagem-para-o-ecr)
-9. [Fase 6: Provisionamento da Instância EC2](#fase-6-provisionamento-da-instância-ec2)
-10. [Fase 7: Deploy na EC2](#fase-7-deploy-na-ec2)
-11. [Verificação e Testes](#verificação-e-testes)
+## 📋 Table of Contents
+1. [Overview](#overview)
+2. [Prerequisites](#prerequisites)
+3. [Project Architecture](#project-architecture)
+4. [Phase 1: Local Environment Setup](#phase-1-local-environment-setup)
+5. [Phase 2: Containerization with Docker](#phase-2-containerization-with-docker)
+6. [Phase 3: Local Container Testing](#phase-3-local-container-testing)
+7. [Phase 4: Amazon ECR Configuration](#phase-4-amazon-ecr-configuration)
+8. [Phase 5: Push Image to ECR](#phase-5-push-image-to-ecr)
+9. [Phase 6: EC2 Instance Provisioning](#phase-6-ec2-instance-provisioning)
+10. [Phase 7: Deploy to EC2](#phase-7-deploy-to-ec2)
+11. [Verification and Testing](#verification-and-testing)
 12. [Troubleshooting](#troubleshooting)
-13. [Limpeza de Recursos](#limpeza-de-recursos)
+13. [Resource Cleanup](#resource-cleanup)
 
 ---
 
-## 🎯 Visão Geral
+## 🎯 Overview
 
-### O que vamos construir?
-Neste laboratório, você aprenderá a containerizar um website estático (HTML, CSS e JavaScript) usando Docker e implantá-lo manualmente em uma instância EC2 na AWS, utilizando o Amazon ECR (Elastic Container Registry) para gerenciamento de imagens.
+### What You'll Build
+Containerize a static website (HTML, CSS, JavaScript) using Docker and deploy it manually to an EC2 instance on AWS using Amazon ECR for image management.
 
-### Por que isso é importante?
-- **Portabilidade**: Seu site funcionará da mesma forma em qualquer ambiente
-- **Isolamento**: Elimina problemas de "funciona na minha máquina"
-- **Escalabilidade**: Base para futuras implementações mais complexas
-- **Padrão da Indústria**: Docker é amplamente utilizado no mercado
+### Why This Matters
+- **Portability**: Your site works the same in any environment
+- **Isolation**: Eliminates "works on my machine" problems
+- **Scalability**: Foundation for more complex implementations
+- **Industry Standard**: Docker is widely used in production
 
-### Tempo estimado: 2-3 horas
+### Estimated Time: 2-3 hours
 
 ---
 
-## 🔧 Pré-requisitos
+## 🔧 Prerequisites
 
-### Ferramentas Necessárias
+### Required Tools
 
 #### 1. **Docker Desktop**
-- **Windows/Mac**: Baixe em [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
-- **Linux**: Instale via terminal:
+- **Windows/Mac**: Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+- **Linux**: Install via terminal:
 ```bash
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 ```
 
-Para verificar a instalação:
+Verify installation:
 ```bash
 docker --version
 ```
 
-*[Espaço para print: Resultado do comando docker --version]*
-
 #### 2. **AWS CLI**
-Instale seguindo a [documentação oficial](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+Install following [official documentation](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-Para verificar:
+Verify:
 ```bash
 aws --version
 ```
 
-*[Espaço para print: Resultado do comando aws --version]*
+#### 3. **AWS Account**
+- Create free account at [aws.amazon.com](https://aws.amazon.com)
+- ⚠️ **Important**: Some resources may incur costs. Use Free Tier when possible
 
-#### 3. **Conta AWS**
-- Crie uma conta gratuita em [aws.amazon.com](https://aws.amazon.com)
-- ⚠️ **Importante**: Alguns recursos podem gerar custos. Use o Free Tier quando possível
+#### 4. **Code Editor**
+- Recommended: [Visual Studio Code](https://code.visualstudio.com/)
+- Useful extensions: Docker, AWS Toolkit
 
-#### 4. **Editor de Código**
-- Recomendado: [Visual Studio Code](https://code.visualstudio.com/)
-- Extensões úteis: Docker, AWS Toolkit
-
-### Estrutura do Projeto
+### Project Structure
 ```
-meu-projeto/
+my-project/
 ├── website/
 │   ├── index.html
 │   ├── styles.css
 │   ├── script.js
 │   └── assets/
-│       └── (imagens, fontes, etc.)
-└── Dockerfile (vamos criar)
+│       └── (images, fonts, etc.)
+└── Dockerfile (we'll create this)
 ```
 
 ---
 
-## 🏗️ Arquitetura do Projeto
+## 🏗️ Project Architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Código Local   │────▶│   Docker Image  │────▶│    Amazon ECR   │
+│  Local Code     │────▶│   Docker Image  │────▶│   Amazon ECR    │
 │  (HTML/CSS/JS)  │     │   (Container)   │     │   (Registry)    │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                                           │
                                                           ▼
                         ┌─────────────────┐     ┌─────────────────┐
-                        │    Browser      │◀────│    Amazon EC2   │
+                        │    Browser      │◀────│   Amazon EC2    │
                         │  (User Access)  │     │   (Container)   │
                         └─────────────────┘     └─────────────────┘
 ```
 
 ---
 
-## 📦 Fase 1: Preparação do Ambiente Local
+## 📦 Phase 1: Local Environment Setup
 
-### Passo 1.1: Verificar estrutura do projeto
+### Step 1.1: Verify Project Structure
 
-Navegue até o diretório do seu projeto:
+Navigate to your project directory:
 ```bash
-cd caminho/para/seu/projeto
+cd path/to/your/project
 ls -la
 ```
 
-Você deve ver a pasta `website/` com seus arquivos:
+Check the `website/` folder:
 ```bash
 ls -la website/
 ```
 
-*[Espaço para print: Estrutura de arquivos do projeto]*
+### Step 1.2: Test Website Locally (Optional)
 
-### Passo 1.2: Testar o website localmente (opcional)
-
-Você pode abrir o `index.html` diretamente no navegador para verificar se está funcionando:
+Open `index.html` directly in your browser:
 ```bash
-# No Mac
+# Mac
 open website/index.html
 
-# No Linux
+# Linux
 xdg-open website/index.html
 
-# No Windows (PowerShell)
+# Windows (PowerShell)
 start website/index.html
 ```
 
-*[Espaço para print: Website funcionando no navegador]*
-
 ---
 
-## 🐳 Fase 2: Containerização com Docker
+## 🐳 Phase 2: Containerization with Docker
 
-### Passo 2.1: Criar o Dockerfile
+### Step 2.1: Create the Dockerfile
 
-Na raiz do projeto (mesmo nível da pasta `website/`), crie um arquivo chamado `Dockerfile`:
+In the project root (same level as `website/` folder), create a file named `Dockerfile`:
 
 ```bash
 touch Dockerfile
 ```
 
-### Passo 2.2: Escrever o Dockerfile
+### Step 2.2: Write the Dockerfile
 
-Abra o Dockerfile no seu editor e adicione:
+Open Dockerfile in your editor and add:
 
 ```dockerfile
-# Imagem base - Nginx Alpine (leve e eficiente)
+# Base image - Nginx Alpine (lightweight and efficient)
 FROM nginx:alpine
 
-# Copia os arquivos do website para o diretório do Nginx
+# Copy website files to Nginx directory
 COPY website/ /usr/share/nginx/html/
 
-# Expõe a porta 80 (documentação - não abre a porta realmente)
+# Expose port 80 (documentation - doesn't actually open the port)
 EXPOSE 80
 
-# Comando padrão quando o container iniciar
+# Default command when container starts
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-#### 🎓 Entendendo cada linha:
+#### 🎓 Understanding Each Line:
 
-- **FROM nginx:alpine**: Define a imagem base. Alpine é uma versão Linux super leve
-- **COPY**: Copia arquivos do host para dentro da imagem
-- **EXPOSE**: Documenta qual porta o container usa
-- **CMD**: Define o comando padrão ao iniciar o container
+- **FROM nginx:alpine**: Defines base image. Alpine is a super lightweight Linux version
+- **COPY**: Copies files from host into the image
+- **EXPOSE**: Documents which port the container uses
+- **CMD**: Defines default command when starting the container
 
-*[Espaço para print: Dockerfile criado no editor]*
+### Step 2.3: Build the Docker Image
 
-### Passo 2.3: Construir a imagem Docker
-
-No terminal, na raiz do projeto, execute:
+In the terminal, from project root, run:
 
 ```bash
-docker build -t meu-website:v1.0 .
+docker build -t my-website:v1.0 .
 ```
 
-#### 🎓 Entendendo o comando:
-- **docker build**: Comando para construir uma imagem
-- **-t meu-website:v1.0**: Tag (nome:versão) da imagem
-- **.**: Contexto de build (diretório atual)
+#### 🎓 Understanding the Command:
+- **docker build**: Command to build an image
+- **-t my-website:v1.0**: Tag (name:version) of the image
+- **.**: Build context (current directory)
 
-Você verá a saída do processo de build:
+Expected output:
 ```
 [+] Building 10.5s (8/8) FINISHED
  => [internal] load build definition from Dockerfile
@@ -196,297 +186,262 @@ Você verá a saída do processo de build:
  => [2/3] RUN rm -rf /usr/share/nginx/html/*
  => [3/3] COPY website/ /usr/share/nginx/html/
  => exporting to image
- => naming to docker.io/library/meu-website:v1.0
+ => naming to docker.io/library/my-website:v1.0
 ```
 
-*[Espaço para print: Processo de build do Docker]*
-
-### Passo 2.4: Verificar a imagem criada
+### Step 2.4: Verify Created Image
 
 ```bash
 docker images
 ```
 
-Você deve ver sua imagem listada:
+You should see:
 ```
 REPOSITORY     TAG       IMAGE ID       CREATED          SIZE
-meu-website    v1.0      abc123def456   30 seconds ago   23.5MB
+my-website     v1.0      abc123def456   30 seconds ago   23.5MB
 ```
-
-*[Espaço para print: Lista de imagens Docker]*
 
 ---
 
-## 🧪 Fase 3: Teste Local do Container
+## 🧪 Phase 3: Local Container Testing
 
-### Passo 3.1: Executar o container localmente
+### Step 3.1: Run Container Locally
 
 ```bash
-docker run -d -p 8080:80 --name meu-website-container meu-website:v1.0
+docker run -d -p 8080:80 --name my-website-container my-website:v1.0
 ```
 
-#### 🎓 Entendendo o comando:
-- **docker run**: Cria e executa um container
-- **-d**: Executa em background (detached)
-- **-p 8080:80**: Mapeia porta 8080 do host para porta 80 do container
-- **--name**: Nome do container
-- **meu-website:v1.0**: Imagem a ser usada
+#### 🎓 Understanding the Command:
+- **docker run**: Creates and runs a container
+- **-d**: Runs in background (detached)
+- **-p 8080:80**: Maps host port 8080 to container port 80
+- **--name**: Container name
+- **my-website:v1.0**: Image to use
 
-### Passo 3.2: Verificar se o container está rodando
+### Step 3.2: Verify Container is Running
 
 ```bash
 docker ps
 ```
 
-Você verá algo como:
+Expected output:
 ```
-CONTAINER ID   IMAGE              COMMAND                  CREATED         STATUS         PORTS                  NAMES
-xyz789abc123   meu-website:v1.0   "nginx -g 'daemon..."   10 seconds ago  Up 9 seconds   0.0.0.0:8080->80/tcp   meu-website-container
+CONTAINER ID   IMAGE            COMMAND                  CREATED         STATUS         PORTS                  NAMES
+xyz789abc123   my-website:v1.0  "nginx -g 'daemon..."   10 seconds ago  Up 9 seconds   0.0.0.0:8080->80/tcp   my-website-container
 ```
 
-*[Espaço para print: Container em execução]*
+### Step 3.3: Test in Browser
 
-### Passo 3.3: Testar no navegador
-
-Abra seu navegador e acesse:
+Open your browser and go to:
 ```
 http://localhost:8080
 ```
 
-Você deve ver seu website funcionando! 🎉
+Your website should be working! 🎉
 
-*[Espaço para print: Website rodando via Docker no localhost:8080]*
-
-### Passo 3.4: Verificar logs do container (opcional)
+### Step 3.4: View Container Logs (Optional)
 
 ```bash
-docker logs meu-website-container
+docker logs my-website-container
 ```
 
-### Passo 3.5: Parar e remover o container de teste
+### Step 3.5: Stop and Remove Test Container
 
 ```bash
-# Parar o container
-docker stop meu-website-container
+# Stop container
+docker stop my-website-container
 
-# Remover o container
-docker rm meu-website-container
+# Remove container
+docker rm my-website-container
 ```
 
 ---
 
-## ☁️ Fase 4: Configuração do Amazon ECR
+## ☁️ Phase 4: Amazon ECR Configuration
 
-### Passo 4.1: Acessar o Console AWS
+### Step 4.1: Access AWS Console
 
-1. Acesse [console.aws.amazon.com](https://console.aws.amazon.com)
-2. Faça login com suas credenciais
+1. Go to [console.aws.amazon.com](https://console.aws.amazon.com)
+2. Log in with your credentials
 
-*[Espaço para print: Console AWS]*
+### Step 4.2: Navigate to ECR
 
-### Passo 4.2: Navegar para o ECR
+1. In the top search bar, type "ECR"
+2. Click on "Elastic Container Registry"
 
-1. Na barra de busca superior, digite "ECR"
-2. Clique em "Elastic Container Registry"
+### Step 4.3: Create Repository
 
-*[Espaço para print: Busca pelo ECR]*
-
-### Passo 4.3: Criar um repositório
-
-1. Clique em "Create repository"
+1. Click "Create repository"
 2. Configure:
    - **Visibility settings**: Private
-   - **Repository name**: `meu-website`
-   - **Tag immutability**: Disabled (padrão)
-   - **Scan on push**: Enabled (recomendado para segurança)
-3. Clique em "Create repository"
+   - **Repository name**: `my-website`
+   - **Tag immutability**: Disabled (default)
+   - **Scan on push**: Enabled (recommended for security)
+3. Click "Create repository"
 
-*[Espaço para print: Formulário de criação do repositório]*
+### Step 4.4: Note the Repository URI
 
-### Passo 4.4: Anotar a URI do repositório
-
-Após criar, você verá algo como:
+After creation, you'll see something like:
 ```
-123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website
+123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website
 ```
 
-⚠️ **Importante**: Copie e guarde esta URI, você precisará dela!
-
-*[Espaço para print: Repositório criado com a URI visível]*
+⚠️ **Important**: Copy and save this URI – you'll need it!
 
 ---
 
-## 📤 Fase 5: Push da Imagem para o ECR
+## 📤 Phase 5: Push Image to ECR
 
-### Passo 5.1: Configurar AWS CLI
+### Step 5.1: Configure AWS CLI
 
-Se ainda não configurou, execute:
+If not already configured, run:
 ```bash
 aws configure
 ```
 
-Você precisará fornecer:
-- **AWS Access Key ID**: Obtida no IAM
-- **AWS Secret Access Key**: Obtida no IAM
-- **Default region**: ex: us-east-1
+Provide:
+- **AWS Access Key ID**: From IAM
+- **AWS Secret Access Key**: From IAM
+- **Default region**: e.g., us-east-1
 - **Default output format**: json
 
-### Passo 5.2: Autenticar Docker com ECR
+### Step 5.2: Authenticate Docker with ECR
 
 ```bash
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-⚠️ **Substitua**: 
-- `us-east-1` pela sua região
-- `123456789012` pelo seu Account ID
+⚠️ **Replace**: 
+- `us-east-1` with your region
+- `123456789012` with your Account ID
 
-Você deve ver:
+Expected output:
 ```
 Login Succeeded
 ```
 
-*[Espaço para print: Login bem-sucedido no ECR]*
-
-### Passo 5.3: Tagar a imagem para o ECR
+### Step 5.3: Tag Image for ECR
 
 ```bash
-docker tag meu-website:v1.0 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+docker tag my-website:v1.0 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-### Passo 5.4: Push da imagem
+### Step 5.4: Push Image
 
 ```bash
-docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-Você verá o progresso do upload:
+Expected output:
 ```
-The push refers to repository [123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website]
+The push refers to repository [123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website]
 abc123: Pushed
 def456: Pushed
 v1.0: digest: sha256:xyz789... size: 1234
 ```
 
-*[Espaço para print: Push concluído]*
+### Step 5.5: Verify in AWS Console
 
-### Passo 5.5: Verificar no Console AWS
-
-1. Volte ao ECR no console AWS
-2. Clique no seu repositório
-3. Você deve ver a imagem com a tag v1.0
-
-*[Espaço para print: Imagem no ECR]*
+1. Return to ECR in AWS console
+2. Click on your repository
+3. You should see the image with tag v1.0
 
 ---
 
-## 🖥️ Fase 6: Provisionamento da Instância EC2
+## 🖥️ Phase 6: EC2 Instance Provisioning
 
-### Passo 6.1: Navegar para EC2
+### Step 6.1: Navigate to EC2
 
-1. No console AWS, busque por "EC2"
-2. Clique em "EC2"
+1. In AWS console, search for "EC2"
+2. Click on "EC2"
 
-### Passo 6.2: Lançar instância
+### Step 6.2: Launch Instance
 
-1. Clique em "Launch Instance"
+1. Click "Launch Instance"
 2. Configure:
 
-#### Nome e tags
-- **Name**: `meu-website-server`
+#### Name and Tags
+- **Name**: `my-website-server`
 
-#### Imagem de aplicação e sistema operacional
+#### Application and OS Image
 - **AMI**: Amazon Linux 2023 (Free tier eligible)
 
-*[Espaço para print: Seleção da AMI]*
-
-#### Tipo de instância
+#### Instance Type
 - **Instance type**: t2.micro (Free tier eligible)
 
-*[Espaço para print: Seleção do tipo de instância]*
-
-#### Par de chaves
-- Clique em "Create new key pair"
-- **Key pair name**: `meu-website-key`
+#### Key Pair
+- Click "Create new key pair"
+- **Key pair name**: `my-website-key`
 - **Key pair type**: RSA
-- **Private key file format**: .pem (Linux/Mac) ou .ppk (Windows/PuTTY)
-- Clique em "Create key pair" e salve o arquivo
+- **Private key file format**: .pem (Linux/Mac) or .ppk (Windows/PuTTY)
+- Click "Create key pair" and save the file
 
-⚠️ **IMPORTANTE**: Guarde este arquivo com segurança! Você precisará dele para acessar a EC2.
+⚠️ **IMPORTANT**: Keep this file secure! You'll need it to access EC2.
 
-*[Espaço para print: Criação do key pair]*
-
-#### Configurações de rede
+#### Network Settings
 - **VPC**: Default
 - **Subnet**: No preference
 - **Auto-assign public IP**: Enable
 - **Firewall (security groups)**: Create security group
-  - **Security group name**: `meu-website-sg`
+  - **Security group name**: `my-website-sg`
   - **Description**: Security group for website
 
-#### Regras do Security Group
-Adicione as seguintes regras:
+#### Security Group Rules
+Add these rules:
 
 | Type | Protocol | Port Range | Source |
 |------|----------|------------|--------|
 | SSH  | TCP      | 22         | My IP  |
 | HTTP | TCP      | 80         | 0.0.0.0/0 |
 
-*[Espaço para print: Configuração do Security Group]*
+#### Configure Storage
+- **Volume**: 8 GiB gp3 (default)
 
-#### Configurar armazenamento
-- **Volume**: 8 GiB gp3 (padrão)
+### Step 6.3: Configure IAM Role (ECR Permissions)
 
-### Passo 6.3: Configurar IAM Role (Permissões para ECR)
-
-#### Criar IAM Role
-1. Em "Advanced details", encontre "IAM instance profile"
-2. Clique em "Create new IAM profile"
-3. Ou vá para IAM Console e:
-   - Clique em "Roles" → "Create role"
+#### Create IAM Role
+1. In "Advanced details", find "IAM instance profile"
+2. Click "Create new IAM profile"
+3. Or go to IAM Console:
+   - Click "Roles" → "Create role"
    - **Trusted entity**: AWS service
    - **Use case**: EC2
-   - **Permissions**: Adicione `AmazonEC2ContainerRegistryReadOnly`
+   - **Permissions**: Add `AmazonEC2ContainerRegistryReadOnly`
    - **Role name**: `EC2-ECR-Role`
+4. Return to EC2 configuration and select the created role
 
-*[Espaço para print: Criação do IAM Role]*
+### Step 6.4: Review and Launch
 
-4. Volte para a configuração da EC2 e selecione o role criado
+1. Review all configurations
+2. Click "Launch instance"
+3. Wait for instance to initialize (status: running)
 
-### Passo 6.4: Revisar e lançar
+### Step 6.5: Note Important Information
 
-1. Revise todas as configurações
-2. Clique em "Launch instance"
-3. Aguarde a instância inicializar (status: running)
-
-*[Espaço para print: Instância EC2 rodando]*
-
-### Passo 6.5: Anotar informações importantes
-
-Anote:
-- **Public IP**: Ex: 54.123.45.67
-- **Instance ID**: Ex: i-0abc123def456789
+Record:
+- **Public IP**: e.g., 54.123.45.67
+- **Instance ID**: e.g., i-0abc123def456789
 
 ---
 
-## 🚀 Fase 7: Deploy na EC2
+## 🚀 Phase 7: Deploy to EC2
 
-### Passo 7.1: Conectar à instância EC2
+### Step 7.1: Connect to EC2 Instance
 
-#### No Linux/Mac:
+#### On Linux/Mac:
 ```bash
-# Ajustar permissões da chave
-chmod 400 meu-website-key.pem
+# Adjust key permissions
+chmod 400 my-website-key.pem
 
-# Conectar via SSH
-ssh -i meu-website-key.pem ec2-user@54.123.45.67
+# Connect via SSH
+ssh -i my-website-key.pem ec2-user@54.123.45.67
 ```
 
-#### No Windows (usando PuTTY):
-1. Converta a chave .pem para .ppk usando PuTTYgen
-2. Use PuTTY para conectar com a chave .ppk
+#### On Windows (using PuTTY):
+1. Convert .pem key to .ppk using PuTTYgen
+2. Use PuTTY to connect with .ppk key
 
-Você verá:
+Expected output:
 ```
    ,     #_
    ~\_  ####_        Amazon Linux 2023
@@ -501,119 +456,109 @@ Você verá:
 [ec2-user@ip-172-31-xx-xx ~]$
 ```
 
-*[Espaço para print: Conexão SSH estabelecida]*
-
-### Passo 7.2: Instalar Docker na EC2
+### Step 7.2: Install Docker on EC2
 
 ```bash
-# Atualizar pacotes
+# Update packages
 sudo yum update -y
 
-# Instalar Docker
+# Install Docker
 sudo yum install docker -y
 
-# Iniciar serviço Docker
+# Start Docker service
 sudo systemctl start docker
 
-# Habilitar Docker no boot
+# Enable Docker on boot
 sudo systemctl enable docker
 
-# Adicionar ec2-user ao grupo docker
+# Add ec2-user to docker group
 sudo usermod -a -G docker ec2-user
 
-# Verificar instalação
+# Verify installation
 docker --version
 ```
 
-### Passo 7.3: Fazer logout e login novamente
+### Step 7.3: Logout and Login Again
 
 ```bash
-# Sair
+# Exit
 exit
 
-# Conectar novamente
-ssh -i meu-website-key.pem ec2-user@54.123.45.67
+# Reconnect
+ssh -i my-website-key.pem ec2-user@54.123.45.67
 ```
 
-### Passo 7.4: Autenticar Docker com ECR na EC2
+### Step 7.4: Authenticate Docker with ECR on EC2
 
 ```bash
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-*[Espaço para print: Login ECR na EC2]*
-
-### Passo 7.5: Pull da imagem do ECR
+### Step 7.5: Pull Image from ECR
 
 ```bash
-docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+docker pull 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-Você verá:
+Expected output:
 ```
-v1.0: Pulling from meu-website
-Status: Downloaded newer image for 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+v1.0: Pulling from my-website
+Status: Downloaded newer image for 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-*[Espaço para print: Pull concluído]*
-
-### Passo 7.6: Executar o container
+### Step 7.6: Run the Container
 
 ```bash
-docker run -d -p 80:80 --name meu-website-prod --restart always 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+docker run -d -p 80:80 --name my-website-prod --restart always 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-#### 🎓 Parâmetros importantes:
-- **--restart always**: Reinicia o container se a EC2 reiniciar
-- **-p 80:80**: Mapeia porta 80 (padrão HTTP)
+#### 🎓 Important Parameters:
+- **--restart always**: Restarts container if EC2 restarts
+- **-p 80:80**: Maps port 80 (default HTTP)
 
-### Passo 7.7: Verificar se está rodando
+### Step 7.7: Verify Running
 
 ```bash
-# Verificar container
+# Check container
 docker ps
 
-# Verificar logs
-docker logs meu-website-prod
+# Check logs
+docker logs my-website-prod
 ```
-
-*[Espaço para print: Container rodando na EC2]*
 
 ---
 
-## ✅ Verificação e Testes
+## ✅ Verification and Testing
 
-### Teste 1: Acessar pelo navegador
+### Test 1: Access via Browser
 
-1. Abra seu navegador
-2. Digite o IP público da EC2: `http://54.123.45.67`
-3. Seu website deve aparecer! 🎉
+1. Open your browser
+2. Enter the EC2 public IP: `http://54.123.45.67`
+3. Your website should appear! 🎉
 
-*[Espaço para print: Website funcionando na AWS]*
-
-### Teste 2: Verificar logs na EC2
+### Test 2: Check Logs on EC2
 
 ```bash
-# Logs do container
-docker logs -f meu-website-prod
+# Container logs
+docker logs -f my-website-prod
 
-# Status do container
-docker stats meu-website-prod
+# Container stats
+docker stats my-website-prod
 ```
 
-### Teste 3: Testar reinicialização
+### Test 3: Test Restart
 
 ```bash
-# Parar o container
-docker stop meu-website-prod
+# Stop container
+docker stop my-website-prod
 
-# Verificar se parou
+# Verify it stopped
 docker ps
 
-# Iniciar novamente
-docker start meu-website-prod
+# Start again
+docker start my-website-prod
 
-# Verificar se voltou
+# Verify it's back
 docker ps
 ```
 
@@ -621,140 +566,125 @@ docker ps
 
 ## 🔧 Troubleshooting
 
-### Problema 1: "Cannot connect to the Docker daemon"
+### Problem 1: "Cannot connect to the Docker daemon"
 
-**Solução**:
+**Solution**:
 ```bash
 sudo systemctl start docker
 sudo usermod -a -G docker $USER
-# Fazer logout e login novamente
+# Logout and login again
 ```
 
-### Problema 2: Site não abre no navegador
+### Problem 2: Website Doesn't Open in Browser
 
-**Verificações**:
-1. Security Group tem porta 80 aberta?
-2. Container está rodando? (`docker ps`)
-3. IP público está correto?
-4. Teste com curl na EC2: `curl localhost`
+**Checks**:
+1. Is port 80 open in Security Group?
+2. Is container running? (`docker ps`)
+3. Is public IP correct?
+4. Test with curl on EC2: `curl localhost`
 
-### Problema 3: "No basic auth credentials" no pull do ECR
+### Problem 3: "No basic auth credentials" when Pulling from ECR
 
-**Solução**:
+**Solution**:
 ```bash
-# Re-autenticar
+# Re-authenticate
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [ECR_URI]
 ```
 
-### Problema 4: Permissão negada no Docker
+### Problem 4: Permission Denied in Docker
 
-**Solução**:
+**Solution**:
 ```bash
-# Adicionar usuário ao grupo docker
+# Add user to docker group
 sudo usermod -a -G docker ec2-user
-# Logout e login
+# Logout and login
 exit
 ssh -i key.pem ec2-user@IP
 ```
 
 ---
 
-## 🧹 Limpeza de Recursos
+## 🧹 Resource Cleanup
 
-⚠️ **IMPORTANTE**: Para evitar custos, limpe os recursos após o laboratório!
+⚠️ **IMPORTANT**: Clean up resources after the lab to avoid charges!
 
-### Passo 1: Parar e remover container na EC2
+### Step 1: Stop and Remove Container on EC2
 
 ```bash
-docker stop meu-website-prod
-docker rm meu-website-prod
-docker rmi 123456789012.dkr.ecr.us-east-1.amazonaws.com/meu-website:v1.0
+docker stop my-website-prod
+docker rm my-website-prod
+docker rmi 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-website:v1.0
 ```
 
-### Passo 2: Terminar instância EC2
+### Step 2: Terminate EC2 Instance
 
-1. Console AWS → EC2
-2. Selecione sua instância
+1. AWS Console → EC2
+2. Select your instance
 3. Actions → Instance State → Terminate
 
-*[Espaço para print: Confirmação de terminate]*
+### Step 3: Delete ECR Image
 
-### Passo 3: Deletar imagem do ECR
-
-1. Console AWS → ECR
-2. Selecione o repositório
-3. Selecione a imagem
+1. AWS Console → ECR
+2. Select repository
+3. Select image
 4. Delete
 
-### Passo 4: Deletar repositório ECR (opcional)
+### Step 4: Delete ECR Repository (Optional)
 
-1. Selecione o repositório
+1. Select repository
 2. Delete
 
-### Passo 5: Deletar Security Group
+### Step 5: Delete Security Group
 
 1. EC2 → Security Groups
-2. Selecione `meu-website-sg`
+2. Select `my-website-sg`
 3. Actions → Delete
 
-### Passo 6: Deletar IAM Role (opcional)
+### Step 6: Delete IAM Role (Optional)
 
 1. IAM → Roles
-2. Selecione `EC2-ECR-Role`
+2. Select `EC2-ECR-Role`
 3. Delete
 
 ---
 
-## 🎓 Conceitos Aprendidos
+## 🎓 Concepts Learned
 
-✅ **Containerização**: Empacotamento de aplicações com suas dependências
+✅ **Containerization**: Packaging applications with dependencies
 
-✅ **Docker**: Plataforma para criar e executar containers
+✅ **Docker**: Platform for creating and running containers
 
-✅ **Dockerfile**: Arquivo de configuração para construir imagens
+✅ **Dockerfile**: Configuration file for building images
 
-✅ **ECR**: Registro privado de imagens Docker na AWS
+✅ **ECR**: Private Docker image registry on AWS
 
-✅ **EC2**: Máquinas virtuais na nuvem AWS
+✅ **EC2**: Virtual machines in AWS cloud
 
-✅ **Security Groups**: Firewall virtual para EC2
+✅ **Security Groups**: Virtual firewall for EC2
 
-✅ **IAM Roles**: Gerenciamento de permissões na AWS
-
----
-
-## 🚀 Próximos Passos
-
-Após completar este laboratório, você está pronto para:
-
-1. **Projeto 2**: Automatizar este processo com CI/CD
-2. **Projeto 3**: Usar Terraform para Infrastructure as Code
-3. **Explorar**: Docker Compose, Kubernetes, ECS/Fargate
+✅ **IAM Roles**: Permission management in AWS
 
 ---
 
-## 📚 Recursos Adicionais
+## 🚀 Next Steps
 
-- [Documentação Docker](https://docs.docker.com/)
+After completing this lab, you're ready for:
+
+1. **Project 2**: Automate this process with CI/CD
+2. **Project 3**: Use Terraform for Infrastructure as Code
+3. **Explore**: Docker Compose, Kubernetes, ECS/Fargate
+
+---
+
+## 📚 Additional Resources
+
+- [Docker Documentation](https://docs.docker.com/)
 - [AWS ECR Documentation](https://docs.aws.amazon.com/ecr/)
 - [AWS EC2 User Guide](https://docs.aws.amazon.com/ec2/)
 - [Best Practices for Dockerfile](https://docs.docker.com/develop/dev-best-practices/)
 
 ---
 
-## 📝 Notas
+**Congratulations! 🎉** You completed the containerization and manual AWS deployment lab!
 
-Use este espaço para suas anotações pessoais:
-
-```
-_____________________________________________________________
-_____________________________________________________________
-_____________________________________________________________
-_____________________________________________________________
-```
-
----
-
-**Parabéns! 🎉** Você completou o laboratório de containerização e deploy manual na AWS!
-
-Desenvolvido com ❤️ para a jornada DevOps
+Developed with ❤️ for the DevOps journey
