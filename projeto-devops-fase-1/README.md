@@ -3,17 +3,18 @@
 ## 📋 Table of Contents
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [Project Architecture](#project-architecture)
-4. [Phase 1: Local Environment Setup](#phase-1-local-environment-setup)
-5. [Phase 2: Containerization with Docker](#phase-2-containerization-with-docker)
-6. [Phase 3: Local Container Testing](#phase-3-local-container-testing)
-7. [Phase 4: Amazon ECR Configuration](#phase-4-amazon-ecr-configuration)
-8. [Phase 5: Push Image to ECR](#phase-5-push-image-to-ecr)
-9. [Phase 6: EC2 Instance Provisioning](#phase-6-ec2-instance-provisioning)
-10. [Phase 7: Deploy to EC2](#phase-7-deploy-to-ec2)
-11. [Verification and Testing](#verification-and-testing)
-12. [Troubleshooting](#troubleshooting)
-13. [Resource Cleanup](#resource-cleanup)
+3. [Development Flow](#development-flow)
+4. [Project Architecture](#project-architecture)
+5. [Phase 1: Local Environment Setup](#phase-1-local-environment-setup)
+6. [Phase 2: Containerization with Docker](#phase-2-containerization-with-docker)
+7. [Phase 3: Local Container Testing](#phase-3-local-container-testing)
+8. [Phase 4: Amazon ECR Configuration](#phase-4-amazon-ecr-configuration)
+9. [Phase 5: Push Image to ECR](#phase-5-push-image-to-ecr)
+10. [Phase 6: EC2 Instance Provisioning](#phase-6-ec2-instance-provisioning)
+11. [Phase 7: Deploy to EC2](#phase-7-deploy-to-ec2)
+12. [Verification and Testing](#verification-and-testing)
+13. [Troubleshooting](#troubleshooting)
+14. [Resource Cleanup](#resource-cleanup)
 
 ---
 
@@ -79,20 +80,21 @@ my-project/
 
 ---
 
+## ♾️ Development Flow
+
+![alt text](images/development-flow.png)
+
 ## 🏗️ Project Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Local Code     │────▶│   Docker Image  │────▶│   Amazon ECR    │
-│  (HTML/CSS/JS)  │     │   (Container)   │     │   (Registry)    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                          │
-                                                          ▼
-                        ┌─────────────────┐     ┌─────────────────┐
-                        │    Browser      │◀────│   Amazon EC2    │
-                        │  (User Access)  │     │   (Container)   │
-                        └─────────────────┘     └─────────────────┘
-```
+The intetion of this project is to understand the previous ways of working such as the following image:
+
+![alt text](images/previous-ways-of-working.png)
+
+This will allow us to understand the limitations of working in this setting and shift our thoughts on a better solution to increase and fix the majority of the problems associated with the previous approach.
+
+The updated / improved way of working will be based on the following approach:
+
+![alt text](images/updated-ways-of-working.png)
 
 ---
 
