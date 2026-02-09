@@ -1,34 +1,34 @@
-# Projeto DevOps - Automação de Deploy de Site em Instância EC2
+# DevOps Project - Automated Site Deployment to EC2
 
-## Descrição
-Este projeto implementa uma pipeline CI/CD utilizando GitHub Actions para automatizar o build, push de uma imagem Docker para o Amazon ECR e o deploy de um site estático em uma instância EC2 na AWS. O site é composto por arquivos HTML, CSS e JavaScript, containerizados via Docker. A pipeline é acionada em pushes para a branch `main`, garantindo integração contínua e entrega contínua com foco em segurança e eficiência, seguindo melhores práticas de DevSecOps, como uso de credenciais temporárias via OIDC e segredos gerenciados.
+## Description
+This project implements a CI/CD pipeline using GitHub Actions to automate the build, push of a Docker image to Amazon ECR, and deployment of a static website to an EC2 instance on AWS. The site consists of HTML, CSS, and JavaScript files, containerized with Docker. The pipeline is triggered on pushes to the `main` branch, ensuring continuous integration and delivery with a focus on security and efficiency, following DevSecOps best practices such as temporary credentials via OIDC and managed secrets.
 
-Essa abordagem promove escalabilidade, com o uso de Infrastructure as Code (IaC) implícito na configuração da pipeline, e reliability através de dependências entre jobs para evitar deploys falhos. Para mais detalhes sobre GitHub Actions, consulte a [documentação oficial](https://docs.github.com/en/actions).
+This approach promotes scalability through implied Infrastructure as Code (IaC) in the pipeline configuration, and reliability through job dependencies to prevent failed deployments. For more details on GitHub Actions, see the [official documentation](https://docs.github.com/en/actions).
 
-## Assista ao Tutorial em Vídeo
-Para complementar esta documentação, elaborei um vídeo completo que explica passo a passo a implementação da pipeline CI/CD, desde a configuração inicial até o deploy na instância EC2, com foco em melhores práticas de DevOps, como uso de credenciais temporárias via OIDC e tagging dinâmico de imagens Docker.
+## Video Tutorial
+Watch the complete video tutorial explaining the CI/CD pipeline implementation step by step, from initial configuration to EC2 deployment, focusing on DevOps best practices like temporary credentials via OIDC and dynamic Docker image tagging.
 
-Esse vídeo faz parte da série "DevOps na Prática", e corresponde à parte 4 de uma playlist abrangente, que cobre todo o processo desde os conceitos iniciais até as otimizações avançadas, incluindo integração com ferramentas como Terraform e SonarQube. Acesse a playlist completa aqui: [Playlist DevOps na Prática](https://youtube.com/playlist?list=PLOCRt8ucq6xNSMUvfTxnk-M4mk9Etwpy6&si=LOoW5N9Xc6-QViKN). Recomendo assistir para uma visão prática e visual.
+This video is part of the "DevOps in Practice" series, corresponding to part 4 of a comprehensive playlist covering the entire process from initial concepts to advanced optimizations, including integration with tools like Terraform and SonarQube. Access the full playlist here: [DevOps in Practice Playlist](https://youtube.com/playlist?list=PLOCRt8ucq6xNSMUvfTxnk-M4mk9Etwpy6&si=LOoW5N9Xc6-QViKN).
 
-## Pré-requisitos
+## Prerequisites
 
-- Conta AWS com permissões para ECR e EC2.
-- Repositório GitHub com segredos configurados: `INSTANCE_KEY` (chave SSH privada) e `PUBLIC_IP` (IP público da instância EC2).
-- Role IAM no AWS para GitHub Actions (usando OIDC para autenticação segura, sem chaves de acesso permanentes). Veja [documentação AWS para GitHub Actions](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html).
-- Instância EC2 com Docker instalado e acesso SSH configurado para o usuário `ec2-user`.
-- Repositório ECR criado na região `us-east-2`.
+- AWS account with permissions for ECR and EC2
+- GitHub repository with configured secrets: `INSTANCE_KEY` (private SSH key) and `PUBLIC_IP` (EC2 instance public IP)
+- IAM Role in AWS for GitHub Actions (using OIDC for secure authentication without permanent access keys). See [AWS documentation for GitHub Actions](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html)
+- EC2 instance with Docker installed and SSH access configured for `ec2-user`
+- ECR repository created in `us-east-2` region
 
-## Estrutura do Repositório
+## Repository Structure
 
-- **website/**: Contém os arquivos do site:
-  - `index.html`: Página principal.
-  - Arquivos CSS e JavaScript para estilização e funcionalidades.
-- **Dockerfile**: Arquivo para build da imagem Docker do site, baseado em uma imagem web server como Nginx ou similar (exemplo: copia arquivos para `/usr/share/nginx/html`).
-- **.github/workflows/deploy.yaml**: Workflow do GitHub Actions para a pipeline CI/CD.
+- **website/**: Contains site files:
+  - `index.html`: Main page
+  - CSS and JavaScript files for styling and functionality
+- **Dockerfile**: File for building Docker image of the site, based on a web server image like Nginx (example: copies files to `/usr/share/nginx/html`)
+- **.github/workflows/deploy.yaml**: GitHub Actions workflow for CI/CD pipeline
 
-## Pipeline CI/CD
+## CI/CD Pipeline
 
-A pipeline é definida no arquivo `deploy.yaml` e consiste em dois jobs sequenciais: build e push para ECR, seguido de deploy via SSH na EC2.
+The pipeline is defined in the `deploy.yaml` file and consists of two sequential jobs: build and push to ECR, followed by deployment via SSH on EC2.
 
 ```yaml
 name: Pipeline CI/CD
@@ -92,51 +92,51 @@ jobs:
           rm chave-site.pem
 ```
 
-**Observações de Segurança:**
-- Substitua `<ACCOUNT_ID>` pelo ID da sua conta AWS.
-- Use segredos do GitHub para armazenar chaves sensíveis, evitando exposição no código.
-- A opção `-o StrictHostKeyChecking=no` é usada para automação
+**Security Notes:**
+- Replace `<ACCOUNT_ID>` with your AWS account ID
+- Use GitHub secrets to store sensitive keys, avoiding exposure in code
+- The `-o StrictHostKeyChecking=no` option is used for automation
 
-## Explicação das Etapas
+## Step Explanation
 
-1. **Trigger**: A pipeline é acionada automaticamente em pushes para a branch `main`.
+1. **Trigger**: Pipeline is automatically triggered on pushes to `main` branch
 
 2. **Job 1 - build_ecr**:
-   - **Checkout**: Baixa o código do repositório.
-   - **Configure AWS Credentials**: Assume uma role IAM via OIDC para autenticação segura sem chaves de acesso.
-   - **ECR Login**: Realiza login no ECR usando credenciais temporárias.
-   - **Build, Tag e Push**: Constrói a imagem Docker a partir do `Dockerfile`, tagga com a versão e envia para o repositório ECR.
+   - **Checkout**: Downloads repository code
+   - **Configure AWS Credentials**: Assumes IAM role via OIDC for secure authentication without access keys
+   - **ECR Login**: Logs into ECR using temporary credentials
+   - **Build, Tag and Push**: Builds Docker image from `Dockerfile`, tags with version and sends to ECR repository
 
-3. **Job 2 - deploy_ec2** (dependente do Job 1):
-   - Usa segredos para chave SSH e IP da EC2.
-   - Cria um arquivo temporário com a chave SSH e configura permissões.
-   - Conecta via SSH à instância EC2 e executa comandos para:
-     - Login no ECR.
-     - Pull da nova imagem.
-     - Parada e remoção do container antigo (se existir).
-     - Execução do novo container mapeando porta 80.
-     - Verificação com `docker ps`.
-   - Remove a chave temporária para evitar vazamentos.
+3. **Job 2 - deploy_ec2** (depends on Job 1):
+   - Uses secrets for SSH key and EC2 IP
+   - Creates temporary file with SSH key and configures permissions
+   - Connects via SSH to EC2 instance and runs commands to:
+     - Login to ECR
+     - Pull new image
+     - Stop and remove old container (if exists)
+     - Run new container mapping port 80
+     - Verify with `docker ps`
+   - Removes temporary key to prevent leaks
 
 
 
-## Pipeline CI/CD Customizável (deploy2.yaml)
+## Customizable CI/CD Pipeline (deploy2.yaml)
 
-### Descrição
+### Description
 
-Esta é uma versão customizável e ligeiramente mais complexa da pipeline CI/CD, definida no arquivo `deploy2.yaml`. Ela aprimora a automação de build, tag e push de imagens Docker para o Amazon ECR, seguida de deploy em uma instância EC2 via SSH. As melhorias incluem: tagging dinâmico da imagem com base no commit SHA e ambiente (prod ou dev, dependendo da branch), uso de outputs para passar variáveis entre jobs, e maior flexibilidade para ambientes multi-branch. Isso segue melhores práticas de DevSecOps, como uso de credenciais temporárias via OIDC, variáveis de ambiente para configuração dinâmica, e atomicidade via dependências de jobs, reduzindo toil e melhorando a rastreabilidade (ex.: logs com tags únicas). Para detalhes sobre outputs em GitHub Actions, consulte a [documentação oficial](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idoutputs).
+This is a customizable and slightly more complex version of the CI/CD pipeline, defined in the `deploy2.yaml` file. It improves automation of Docker image build, tag, and push to Amazon ECR, followed by deployment to an EC2 instance via SSH. Improvements include: dynamic image tagging based on commit SHA and environment (prod or dev, depending on branch), use of outputs to pass variables between jobs, and greater flexibility for multi-branch environments. This follows DevSecOps best practices like temporary credentials via OIDC, environment variables for dynamic configuration, and atomicity via job dependencies, reducing toil and improving traceability (e.g., logs with unique tags). For details on outputs in GitHub Actions, see the [official documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idoutputs).
 
-Essa versão é ideal para cenários onde se deseja escalabilidade, como integração com múltiplos ambientes ou integração com ferramentas como Terraform para provisionamento dinâmico de recursos. Ela mantém foco em segurança, utilizando segredos gerenciados e permissões mínimas (`contents: read` e `id-token: write`).
+This version is ideal for scenarios requiring scalability, such as integration with multiple environments or integration with tools like Terraform for dynamic resource provisioning. It maintains focus on security, using managed secrets and minimal permissions (`contents: read` and `id-token: write`).
 
-### Pré-requisitos
+### Prerequisites
 
-Mesmos da pipeline original, com adição de:
-- Configuração de branches adicionais (ex.: `dev` para ambientes de teste), ajustando a lógica de `ENVIRONMENT`.
-- Repositório ECR com permissões para push de tags dinâmicas.
+Same as original pipeline, with addition of:
+- Configuration of additional branches (e.g., `dev` for test environments), adjusting `ENVIRONMENT` logic
+- ECR repository with permissions for pushing dynamic tags
 
-### Pipeline CI/CD Customizável
+### Customizable CI/CD Pipeline
 
-O workflow é acionado em pushes para `main`, mas pode ser expandido para outras branches. Aqui está o conteúdo do `deploy2.yaml` (com dados sensíveis substituídos por placeholders):
+The workflow is triggered on pushes to `main`, but can be expanded to other branches. Here's the content of `deploy2.yaml` (with sensitive data replaced by placeholders):
 
 ```yaml
 name: Pipeline CI/CD
@@ -213,29 +213,29 @@ jobs:
           rm key.pem
 ```
 
-### Explicação das Etapas
+### Step Explanation
 
-1. **Trigger e Permissões**: Acionado em pushes para `main`, com permissões mínimas para leitura de conteúdo e geração de ID tokens OIDC.
+1. **Trigger and Permissions**: Triggered on pushes to `main`, with minimal permissions for content reading and OIDC ID token generation
 
 2. **Job build-ecr**:
-   - **Checkout**: Baixa o código.
-   - **Configure AWS Credentials**: Assume role IAM via OIDC.
-   - **Login to ECR**: Gera credenciais temporárias e expõe `registry` como output.
-   - **Build, Tag e Push**: Define ambiente dinamicamente (`prod` para `main`, `dev` otherwise), gera tag única com SHA do commit para versionamento imutável, constrói e pusha a imagem. Outputs (`image_tag`, `image_uri`) são passados para o próximo job, promovendo decoupling.
+   - **Checkout**: Downloads code
+   - **Configure AWS Credentials**: Assumes IAM role via OIDC
+   - **Login to ECR**: Generates temporary credentials and exposes `registry` as output
+   - **Build, Tag and Push**: Defines environment dynamically (`prod` for `main`, `dev` otherwise), generates unique tag with commit SHA for immutable versioning, builds and pushes image. Outputs (`image_tag`, `image_uri`) are passed to next job, promoting decoupling
 
-3. **Job deploy-ssh** (dependente de build-ecr):
-   - Usa outputs do job anterior para imagem dinâmica.
-   - Cria chave SSH temporária com permissões seguras.
-   - Via SSH na EC2: Loga no ECR, puxa a imagem específica, para/remove container antigo, inicia novo mapeando porta 80, verifica com `docker ps`.
-   - Remove chave para evitar exposição.
+3. **Job deploy-ssh** (depends on build-ecr):
+   - Uses outputs from previous job for dynamic image
+   - Creates temporary SSH key with secure permissions
+   - Via SSH on EC2: Logs into ECR, pulls specific image, stops/removes old container, starts new one mapping port 80, verifies with `docker ps`
+   - Removes key to prevent exposure
 
-Essa estrutura melhora reliability com tags imutáveis (facilitando rollbacks) e scalability para multi-ambientes, alinhando com SRE principles como SLOs para deploy time (monitore via Prometheus).
+This structure improves reliability with immutable tags (facilitating rollbacks) and scalability for multi-environments, aligning with SRE principles.
 
-### Melhorias em Relação à Versão Original
+### Improvements Over Original Version
 
-- **Tagging Dinâmico**: Usa commit SHA para tags únicas, evitando sobrescrita e permitindo traceability (ex.: rollback para tag específica via `docker pull`).
-- **Ambientes Customizáveis**: Lógica condicional para `prod/dev`, expansível para mais branches com GitOps tools como ArgoCD.
-- **Outputs entre Jobs**: Melhora modularidade, facilitando adição de jobs (ex.: testes com SonarQube antes de deploy).
-- **Flexibilidade**: Fácil integração com IaC (ex.: Terraform para criar ECR/EC2) ou monitoramento (ex.: Datadog para alertas em falhas).
+- **Dynamic Tagging**: Uses commit SHA for unique tags, avoiding overwrites and enabling traceability (e.g., rollback to specific tag via `docker pull`)
+- **Customizable Environments**: Conditional logic for `prod/dev`, expandable to more branches with GitOps tools
+- **Outputs Between Jobs**: Improves modularity, facilitating addition of jobs (e.g., tests with SonarQube before deploy)
+- **Flexibility**: Easy integration with IaC (e.g., Terraform to create ECR/EC2) or monitoring tools
 
-Para testes locais, build com `docker build -t <registry>/<repo>:prod-<sha> .` e simule deploy manual. Para otimizações, integre Snyk para scans de vulnerabilidades no build (doc: [Snyk GitHub Actions](https://docs.snyk.io/integrations/ci-cd-integrations/github-actions-integration)).
+For local testing, build with `docker build -t <registry>/<repo>:prod-<sha> .` and simulate manual deployment.
